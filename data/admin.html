@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OrderBox - Admin</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <main class="container">
+    <section class="card header">
+      <h1>Panel de administración</h1>
+      <p>Control de productos y mesas</p>
+      <span id="wsStatus" class="badge">Conectando...</span>
+    </section>
+
+    <section class="card">
+      <h2>Productos</h2>
+      <div id="products"></div>
+    </section>
+
+    <section class="card">
+      <h2>Mesas</h2>
+      <p class="muted">Una mesa bloqueada no permite crear nuevos pedidos desde su QR.</p>
+      <div id="tables"></div>
+    </section>
+
+    <section class="card">
+      <h2>QR sugeridos</h2>
+      <p><strong>Mesa 1:</strong> http://192.168.4.1/?table=1</p>
+      <p><strong>Contador:</strong> http://192.168.4.1/?mode=counter</p>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+</html>
