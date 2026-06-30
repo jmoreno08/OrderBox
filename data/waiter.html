@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Meseros - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="dark-page">
+  <header class="topbar dark"><div class="brand"><span class="logo">OB</span><div><b>Panel de meseros</b><small>Pedidos listos y mesas activas</small></div></div><div class="top-actions"><a class="ghost" href="/dashboard">Dashboard</a><button id="soundBtn" class="ghost" onclick="enableSound()">Activar sonido</button></div></header>
+  <main class="kitchen-layout wide-layout"><section class="panel ops-panel"><h2>Listos para entregar</h2><div id="readyOrders" class="ops-grid"></div></section><section class="panel ops-panel"><h2>Activos por mesa</h2><div id="tableOrders" class="ops-grid"></div></section></main>
+  <script src="/waiter.js"></script>
+</body>
+</html>

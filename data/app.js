@@ -2,15 +2,19 @@ let products = [];
 let extras = [];
 let cart = [];
 let activeCategory = 'Todas';
+let currency = '$';
 const qs = new URLSearchParams(location.search);
 const table = qs.get('table') || '';
 const mode = qs.get('mode') || '';
-const money = n => '$' + Number(n || 0).toLocaleString('es-CO');
+const money = n => currency + Number(n || 0).toLocaleString('es-CO');
 const img = p => p.image || '/img/placeholder.svg';
 
 async function load(){
   const s = await fetch('/api/public-settings').then(r=>r.json());
   title.textContent = s.businessName || 'OrderBox';
+  currency = s.currency || '$';
+  if(s.primaryColor) document.documentElement.style.setProperty('--primary', s.primaryColor);
+  if(s.logo) document.querySelector('.logo').innerHTML = `<img src="${s.logo}" onerror="this.style.display='none'">`;
   tableBadge.textContent = table ? `Mesa ${table}` : 'Pedido mostrador';
   products = await fetch('/api/menu').then(r=>r.json());
   extras = await fetch('/api/public/extras').then(r=>r.json());
@@ -31,8 +35,23 @@ function renderCategories(){
 function setCategory(c){activeCategory=c;renderCategories();renderMenu();}
 
 function renderMenu(){
-  const list = activeCategory === 'Todas' ? products : products.filter(p => (p.category || 'General') === activeCategory);
-  menu.innerHTML = list.map(p=>{
+  const q = (searchBox.value || '').toLowerCase();
+  const list = (activeCategory === 'Todas' ? products : products.filter(p => (p.category || 'General') === activeCategory))
+    .filter(p => !q || `${p.name} ${p.category} ${p.description}`.toLowerCase().includes(q));
+  if(activeCategory === 'Todas'){
+    const grouped = [...new Set(list.map(p=>p.category || 'General'))].map(cat => {
+      const cards = list.filter(p => (p.category || 'General') === cat).map(productCard).join('');
+      return `<section class="category-section"><h2>${cat}</h2><div class="product-grid">${cards}</div></section>`;
+    }).join('');
+    menu.className = 'menu-stack';
+    menu.innerHTML = grouped || '<p class="muted">No hay productos para esta busqueda.</p>';
+    return;
+  }
+  menu.className = 'product-grid';
+  menu.innerHTML = list.map(productCard).join('') || '<p class="muted">No hay productos para esta busqueda.</p>';
+}
+
+function productCard(p){
     const pe = productExtras(p.id);
     return `<article class="product-card">
       <div class="product-img"><img src="${img(p)}" onerror="this.src='/img/placeholder.svg'"></div>
@@ -45,7 +64,6 @@ function renderMenu(){
         <div class="price-row"><span class="price">${money(p.price)}</span><button class="primary" onclick="add(${p.id})">Agregar</button></div>
       </div>
     </article>`;
-  }).join('');
 }
 
 function selectedExtras(productId){

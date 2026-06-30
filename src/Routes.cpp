@@ -28,6 +28,26 @@ void setupRoutes() {
     request->send(LittleFS, "/kitchen.html", "text/html");
   });
 
+  server.on("/dashboard.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(LittleFS, "/dashboard.html", "text/html");
+  });
+
+  server.on("/waiter.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(LittleFS, "/waiter.html", "text/html");
+  });
+
+  server.on("/history.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(LittleFS, "/history.html", "text/html");
+  });
+
+  server.on("/cashier.html", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(LittleFS, "/cashier.html", "text/html");
+  });
+
   server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -80,10 +100,53 @@ void setupRoutes() {
     request->send(200, "application/json", buildSettingsJson());
   });
 
+  server.on("/api/business", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(200, "application/json", buildBusinessJson());
+  });
+
+  server.on("/api/orders/export.json", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+    request->send(200, "application/json", buildOrdersJson());
+  });
+
+  server.on("/api/orders/export.csv", HTTP_GET, [](AsyncWebServerRequest *request) {
+    if (!requireAdminAuth(request)) return;
+
+    String csv = "id,createdAt,sourceType,table,counterNumber,status,total,products,cancelReason\n";
+    for (int i = 0; i < orderCount; i++) {
+      float total = 0;
+      String productsText = "";
+
+      for (int j = 0; j < orders[i].itemCount; j++) {
+        OrderItem& item = orders[i].items[j];
+        if (productsText.length() > 0) productsText += " | ";
+        productsText += String(item.qty) + "x " + item.name;
+        total += item.price * item.qty;
+        for (int k = 0; k < item.extraCount; k++) total += item.extras[k].price * item.qty;
+      }
+
+      csv += String(orders[i].id) + ",";
+      csv += String(orders[i].createdAt) + ",";
+      csv += orders[i].sourceType + ",";
+      csv += orders[i].table + ",";
+      csv += String(orders[i].counterNumber) + ",";
+      csv += statusToString(orders[i].status) + ",";
+      csv += String(total, 2) + ",\"";
+      csv += productsText;
+      csv += "\",\"";
+      csv += orders[i].cancelReason;
+      csv += "\"\n";
+    }
+
+    request->send(200, "text/csv", csv);
+  });
+
   server.on("/api/backup/export", HTTP_GET, [](AsyncWebServerRequest *request) {
     if (!requireAdminAuth(request)) return;
     JsonDocument doc;
     deserializeJson(doc["settings"], readTextFile(SETTINGS_FILE));
+    deserializeJson(doc["business"], buildBusinessJson());
     deserializeJson(doc["products"], buildProductsJson(false));
     deserializeJson(doc["categories"], buildCategoriesJson(false));
     deserializeJson(doc["extras"], buildExtrasJson(false));
@@ -154,6 +217,11 @@ void setupRoutes() {
       handleJsonPost(request, data, len, handleSettingsSave, true);
     });
 
+  server.on("/api/business/save", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      handleJsonPost(request, data, len, handleBusinessSave, true);
+    });
+
   server.on("/api/backup/import", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
     [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
       if (!request->authenticate(ADMIN_AUTH_USER, ADMIN_AUTH_PASSWORD)) {
@@ -211,6 +279,30 @@ void setupRoutes() {
     if (url == "/kitchen") {
       if (!requireAdminAuth(request)) return;
       request->redirect("/kitchen.html");
+      return;
+    }
+
+    if (url == "/dashboard") {
+      if (!requireAdminAuth(request)) return;
+      request->redirect("/dashboard.html");
+      return;
+    }
+
+    if (url == "/waiter") {
+      if (!requireAdminAuth(request)) return;
+      request->redirect("/waiter.html");
+      return;
+    }
+
+    if (url == "/history") {
+      if (!requireAdminAuth(request)) return;
+      request->redirect("/history.html");
+      return;
+    }
+
+    if (url == "/cashier") {
+      if (!requireAdminAuth(request)) return;
+      request->redirect("/cashier.html");
       return;
     }
 

@@ -26,6 +26,7 @@
 #define TABLES_FILE   "/tables.json"
 #define ORDERS_FILE   "/orders.json"
 #define SETTINGS_FILE "/settings.json"
+#define BUSINESS_FILE "/business.json"
 #define PRODUCT_IMAGES_DIR "/img/products"
 #define MAX_PRODUCT_IMAGE_SIZE 120000
 
@@ -88,7 +89,9 @@ struct Order {
   int itemCount;
   OrderStatus status;
   unsigned long createdAt;
+  unsigned long readyAt;
   String notes;
+  String cancelReason;
 };
 
 struct AppSettings {
@@ -96,6 +99,19 @@ struct AppSettings {
   String apSsid;
   String apPassword;
   bool counterModeEnabled;
+};
+
+struct BusinessConfig {
+  String businessName;
+  String logo;
+  String primaryColor;
+  String address;
+  String phone;
+  String currency;
+  bool taxEnabled;
+  float taxRate;
+  bool serviceTipEnabled;
+  float serviceTipRate;
 };
 
 extern AsyncWebServer server;
@@ -116,6 +132,7 @@ extern int orderCount;
 extern int nextOrderId;
 extern int nextCounterNumber;
 extern AppSettings settings;
+extern BusinessConfig business;
 
 String statusToString(OrderStatus status);
 OrderStatus stringToStatus(const String& status);
@@ -141,6 +158,7 @@ String buildTablesJson();
 String buildOrdersJson();
 String buildSettingsJson();
 String buildPublicSettingsJson();
+String buildBusinessJson();
 
 bool writeTextFile(const char* path, const String& content);
 String readTextFile(const char* path);
@@ -150,17 +168,20 @@ void saveExtras();
 void saveTables();
 void saveOrders();
 void saveSettings();
+void saveBusiness();
 void loadDefaultProducts();
 void loadDefaultCategories();
 void loadDefaultExtras();
 void loadDefaultTables();
 void loadDefaultSettings();
+void loadDefaultBusiness();
 void loadProducts();
 void loadCategories();
 void loadExtras();
 void loadTables();
 void loadOrders();
 void loadSettings();
+void loadBusiness();
 void loadAllData();
 
 void broadcastDoc(JsonDocument& doc);
@@ -185,6 +206,7 @@ void handleExtraDelete(AsyncWebServerRequest *request, JsonDocument& doc);
 void handleTableSave(AsyncWebServerRequest *request, JsonDocument& doc);
 void handleTableDelete(AsyncWebServerRequest *request, JsonDocument& doc);
 void handleSettingsSave(AsyncWebServerRequest *request, JsonDocument& doc);
+void handleBusinessSave(AsyncWebServerRequest *request, JsonDocument& doc);
 void handleResetData(AsyncWebServerRequest *request);
 void handleBackupImport(AsyncWebServerRequest *request, JsonDocument& doc);
 void handleProductImageUpload(
@@ -195,6 +217,10 @@ void handleProductImageUpload(
   size_t len,
   bool final
 );
-void printOrderTicket(Order& order);
+void printOrderTicket(const Order& order);
+
+namespace PrinterService {
+  void printOrder(const Order& order);
+}
 
 void setupRoutes();

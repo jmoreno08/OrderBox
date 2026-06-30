@@ -56,7 +56,9 @@ void handleCreateOrder(AsyncWebServerRequest *request, JsonDocument& doc) {
   order.itemCount = 0;
   order.status = RECEIVED;
   order.createdAt = millis();
+  order.readyAt = 0;
   order.notes = doc["notes"] | "";
+  order.cancelReason = "";
 
   for (JsonObject item : items) {
     if (order.itemCount >= MAX_ITEMS_PER_ORDER) break;
@@ -123,6 +125,12 @@ void handleOrderUpdate(AsyncWebServerRequest *request, JsonDocument& doc) {
   }
 
   order->status = stringToStatus(requestedStatus);
+  if (order->status == READY && order->readyAt == 0) {
+    order->readyAt = millis();
+  }
+  if (order->status == CANCELLED) {
+    order->cancelReason = doc["cancelReason"] | "otro";
+  }
   saveOrders();
 
   JsonDocument responseDoc;
@@ -355,6 +363,27 @@ void handleSettingsSave(AsyncWebServerRequest *request, JsonDocument& doc) {
   broadcastSettingsEvent();
 }
 
+void handleBusinessSave(AsyncWebServerRequest *request, JsonDocument& doc) {
+  business.businessName = String((const char*)doc["businessName"]);
+  business.logo = String((const char*)doc["logo"]);
+  business.primaryColor = String((const char*)doc["primaryColor"]);
+  business.address = String((const char*)doc["address"]);
+  business.phone = String((const char*)doc["phone"]);
+  business.currency = String((const char*)doc["currency"]);
+  business.taxEnabled = doc["taxEnabled"] | false;
+  business.taxRate = doc["taxRate"] | 0;
+  business.serviceTipEnabled = doc["serviceTipEnabled"] | false;
+  business.serviceTipRate = doc["serviceTipRate"] | 0;
+
+  if (business.businessName.length() == 0) business.businessName = settings.businessName;
+  if (business.primaryColor.length() == 0) business.primaryColor = "#5b4bff";
+  if (business.currency.length() == 0) business.currency = "$";
+
+  saveBusiness();
+  request->send(200, "application/json", buildBusinessJson());
+  broadcastSettingsEvent();
+}
+
 void handleResetData(AsyncWebServerRequest *request) {
   LittleFS.remove(PRODUCTS_FILE);
   LittleFS.remove(CATEGORIES_FILE);
@@ -362,8 +391,10 @@ void handleResetData(AsyncWebServerRequest *request) {
   LittleFS.remove(TABLES_FILE);
   LittleFS.remove(ORDERS_FILE);
   LittleFS.remove(SETTINGS_FILE);
+  LittleFS.remove(BUSINESS_FILE);
 
   loadDefaultSettings();
+  loadDefaultBusiness();
   loadDefaultCategories();
   loadDefaultProducts();
   loadDefaultExtras();
@@ -373,6 +404,7 @@ void handleResetData(AsyncWebServerRequest *request) {
   nextCounterNumber = 1;
 
   saveSettings();
+  saveBusiness();
   saveCategories();
   saveProducts();
   saveExtras();
@@ -395,6 +427,9 @@ void handleBackupImport(AsyncWebServerRequest *request, JsonDocument& doc) {
 
   String output;
   serializeJson(doc["settings"], output); writeTextFile(SETTINGS_FILE, output); output = "";
+  if (doc["business"].is<JsonObject>()) {
+    serializeJson(doc["business"], output); writeTextFile(BUSINESS_FILE, output); output = "";
+  }
   serializeJson(doc["categories"], output); writeTextFile(CATEGORIES_FILE, output); output = "";
   serializeJson(doc["products"], output); writeTextFile(PRODUCTS_FILE, output); output = "";
   serializeJson(doc["extras"], output); writeTextFile(EXTRAS_FILE, output); output = "";

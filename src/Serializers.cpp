@@ -40,7 +40,9 @@ void serializeOrder(JsonObject obj, const Order& order) {
   obj["counterNumber"] = order.counterNumber;
   obj["status"] = statusToString(order.status);
   obj["createdAt"] = order.createdAt;
+  obj["readyAt"] = order.readyAt;
   obj["notes"] = order.notes;
+  obj["cancelReason"] = order.cancelReason;
 
   JsonArray items = obj["items"].to<JsonArray>();
 
@@ -138,6 +140,7 @@ String buildOrdersJson() {
 String buildSettingsJson() {
   JsonDocument doc;
   doc["businessName"] = settings.businessName;
+  doc["displayName"] = business.businessName.length() ? business.businessName : settings.businessName;
   doc["apSsid"] = settings.apSsid;
   doc["apSsidEffective"] = buildEffectiveApSsid();
   doc["moduleId"] = getModuleId();
@@ -159,10 +162,31 @@ String buildSettingsJson() {
 
 String buildPublicSettingsJson() {
   JsonDocument doc;
-  doc["businessName"] = settings.businessName;
+  doc["businessName"] = business.businessName.length() ? business.businessName : settings.businessName;
+  doc["logo"] = business.logo;
+  doc["primaryColor"] = business.primaryColor;
+  doc["currency"] = business.currency;
   doc["counterModeEnabled"] = settings.counterModeEnabled;
   doc["apSsidEffective"] = buildEffectiveApSsid();
   doc["moduleId"] = getModuleId();
+
+  String response;
+  serializeJson(doc, response);
+  return response;
+}
+
+String buildBusinessJson() {
+  JsonDocument doc;
+  doc["businessName"] = business.businessName;
+  doc["logo"] = business.logo;
+  doc["primaryColor"] = business.primaryColor;
+  doc["address"] = business.address;
+  doc["phone"] = business.phone;
+  doc["currency"] = business.currency;
+  doc["taxEnabled"] = business.taxEnabled;
+  doc["taxRate"] = business.taxRate;
+  doc["serviceTipEnabled"] = business.serviceTipEnabled;
+  doc["serviceTipRate"] = business.serviceTipRate;
 
   String response;
   serializeJson(doc, response);

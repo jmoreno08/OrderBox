@@ -48,6 +48,10 @@ void saveSettings() {
   writeTextFile(SETTINGS_FILE, response);
 }
 
+void saveBusiness() {
+  writeTextFile(BUSINESS_FILE, buildBusinessJson());
+}
+
 int ensureCategoryByName(const String& name) {
   String safeName = name.length() ? name : "General";
 
@@ -112,6 +116,19 @@ void loadDefaultSettings() {
   settings.apSsid = WIFI_AP_SSID_DEFAULT;
   settings.apPassword = WIFI_AP_PASSWORD_DEFAULT;
   settings.counterModeEnabled = true;
+}
+
+void loadDefaultBusiness() {
+  business.businessName = settings.businessName.length() ? settings.businessName : "OrderBox Demo";
+  business.logo = "";
+  business.primaryColor = "#5b4bff";
+  business.address = "";
+  business.phone = "";
+  business.currency = "$";
+  business.taxEnabled = false;
+  business.taxRate = 0;
+  business.serviceTipEnabled = false;
+  business.serviceTipRate = 0;
 }
 
 void loadCategories() {
@@ -288,7 +305,9 @@ void loadOrders() {
     order.counterNumber = obj["counterNumber"] | 0;
     order.status = stringToStatus(String((const char*)obj["status"]));
     order.createdAt = obj["createdAt"] | 0;
+    order.readyAt = obj["readyAt"] | 0;
     order.notes = obj["notes"] | "";
+    order.cancelReason = obj["cancelReason"] | "";
     order.itemCount = 0;
 
     for (JsonObject item : obj["items"].as<JsonArray>()) {
@@ -348,8 +367,41 @@ void loadSettings() {
   if (settings.apPassword.length() < 8) settings.apPassword = WIFI_AP_PASSWORD_DEFAULT;
 }
 
+void loadBusiness() {
+  String content = readTextFile(BUSINESS_FILE);
+
+  if (content.length() == 0) {
+    loadDefaultBusiness();
+    saveBusiness();
+    return;
+  }
+
+  JsonDocument doc;
+  if (deserializeJson(doc, content)) {
+    loadDefaultBusiness();
+    saveBusiness();
+    return;
+  }
+
+  business.businessName = String((const char*)doc["businessName"]);
+  business.logo = String((const char*)doc["logo"]);
+  business.primaryColor = String((const char*)doc["primaryColor"]);
+  business.address = String((const char*)doc["address"]);
+  business.phone = String((const char*)doc["phone"]);
+  business.currency = String((const char*)doc["currency"]);
+  business.taxEnabled = doc["taxEnabled"] | false;
+  business.taxRate = doc["taxRate"] | 0;
+  business.serviceTipEnabled = doc["serviceTipEnabled"] | false;
+  business.serviceTipRate = doc["serviceTipRate"] | 0;
+
+  if (business.businessName.length() == 0) business.businessName = settings.businessName;
+  if (business.primaryColor.length() == 0) business.primaryColor = "#5b4bff";
+  if (business.currency.length() == 0) business.currency = "$";
+}
+
 void loadAllData() {
   loadSettings();
+  loadBusiness();
   loadCategories();
   loadProducts();
   loadExtras();

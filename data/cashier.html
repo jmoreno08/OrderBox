@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Caja - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="admin-page">
+  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Caja</small></div></div><a href="/dashboard">Dashboard</a><a href="/waiter">Meseros</a><a href="/history">Historial</a><a href="/admin">Admin</a></aside>
+  <main class="admin-main"><section class="section-title"><h1>Caja</h1><div class="top-actions"><button onclick="download('/api/orders/export.csv','orderbox-orders.csv')">Exportar CSV</button></div></section><div id="stats" class="stats-grid"></div><section class="panel"><h2>Pedidos del dia</h2><div id="ordersList" class="admin-list"></div></section></main>
+  <script src="/cashier.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+let orders=[],soundEnabled=false,readySeen=new Set(),currency='$';
+const money=n=>currency+Number(n||0).toLocaleString('es-CO');
+const age=ms=>{const m=Math.max(0,Math.floor((Date.now()-Number(ms||0))/60000));return m<60?`${m} min`:`${Math.floor(m/60)} h ${m%60} min`;};
+function total(o){return o.items.reduce((a,i)=>a+(i.price+(i.extras||[]).reduce((x,e)=>x+Number(e.price||0),0))*i.qty,0);}
+function src(o){return o.sourceType==='counter'?`Mostrador #${o.counterNumber}`:`Mesa ${o.table}`;}
+function beep(){if(!soundEnabled)return;const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=720;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close();},180);}
+function enableSound(){soundEnabled=true;soundBtn.textContent='Sonido activo';beep();}
+async function load(){const [next,biz]=await Promise.all([fetch('/api/orders').then(r=>r.json()),fetch('/api/business').then(r=>r.json()).catch(()=>({}))]);currency=biz.currency||currency;next.filter(o=>o.status==='READY').forEach(o=>{if(!readySeen.has(o.id)&&readySeen.size)beep();readySeen.add(o.id)});orders=next;render();}
+function card(o,deliver){return `<article class="order-card ${o.status}"><div class="order-head"><div><h3>#${o.id} ${src(o)}</h3><small>${age(o.createdAt)}</small></div><span class="pill">${money(total(o))}</span></div><div class="order-items">${o.items.map(i=>`<div class="order-item"><span><b>${i.qty} x ${i.name}</b>${i.notes?`<br><small>${i.notes}</small>`:''}</span></div>`).join('')}</div>${o.notes?`<p class="muted">Obs: ${o.notes}</p>`:''}${deliver?`<button class="btn-green wide" onclick="upd(${o.id},'DELIVERED')">Entregado</button>`:''}</article>`;}
+function render(){readyOrders.innerHTML=orders.filter(o=>o.status==='READY').sort((a,b)=>a.createdAt-b.createdAt).map(o=>card(o,true)).join('')||'<p class="muted">No hay pedidos listos.</p>';tableOrders.innerHTML=orders.filter(o=>['RECEIVED','PREPARING','READY'].includes(o.status)).sort((a,b)=>String(a.table).localeCompare(String(b.table))).map(o=>card(o,false)).join('')||'<p class="muted">Sin pedidos activos.</p>';}
+async function upd(id,status){await fetch('/api/order/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});load();}
+let ws=new WebSocket(`ws://${location.host}/ws`);ws.onmessage=load;load();setInterval(render,30000);

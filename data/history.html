@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Historial - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="admin-page">
+  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Historial</small></div></div><a href="/admin">Admin</a><a href="/dashboard">Dashboard</a><a href="/kitchen">Cocina</a><a href="/waiter">Meseros</a></aside>
+  <main class="admin-main">
+    <section class="section-title"><h1>Historial de pedidos</h1><div class="top-actions"><button onclick="download('/api/orders/export.json','orderbox-orders.json')">JSON</button><button onclick="download('/api/orders/export.csv','orderbox-orders.csv')">CSV</button></div></section>
+    <section class="panel"><div class="form-grid"><select id="filterStatus" oninput="render()"><option value="">Entregados y cancelados</option><option>DELIVERED</option><option>CANCELLED</option></select><input id="filterTable" oninput="render()" placeholder="Mesa"><input id="filterDate" type="date" oninput="render()"><input id="filterText" oninput="render()" placeholder="Buscar producto o nota"></div><div id="historyList" class="admin-list"></div></section>
+  </main>
+  <script src="/history.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="es">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
 <body class="admin-page">
-  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Panel administrador</small></div></div><a href="#dashboard">Dashboard</a><a href="#categories">Categorias</a><a href="#products">Productos</a><a href="#extras">Extras</a><a href="#tables">Mesas</a><a href="#history">Historial</a><a href="#settings">Configuracion</a></aside>
+  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Panel administrador</small></div></div><a href="/dashboard">Dashboard vivo</a><a href="/kitchen">Cocina</a><a href="/waiter">Meseros</a><a href="/cashier">Caja</a><a href="/history">Historial vivo</a><a href="#dashboard">Resumen</a><a href="#categories">Categorias</a><a href="#products">Productos</a><a href="#extras">Extras</a><a href="#tables">Mesas</a><a href="#history">Historial</a><a href="#settings">Configuracion</a></aside>
   <main class="admin-main">
     <section id="dashboard"><h1>Dashboard</h1><div id="stats" class="stats-grid"></div></section>
 
@@ -12,7 +12,7 @@
     </section>
 
     <section id="products" class="panel"><div class="section-title"><h2>Productos</h2><span class="pill">Imagen por producto</span></div>
-      <div class="form-grid"><input id="pname" placeholder="Nombre"><input id="pprice" type="number" placeholder="Precio"><select id="pcategoryId"></select><input id="pimage" placeholder="Imagen: /img/burger.svg"><input id="pfile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><input id="pdescription" class="span2" placeholder="Descripcion"><label><input id="pactive" type="checkbox" checked> Activo</label><button class="primary" onclick="saveProduct()">Guardar producto</button></div>
+      <div class="form-grid"><input id="productSearch" oninput="renderProducts()" placeholder="Buscar por nombre, categoria o descripcion"><input id="pname" placeholder="Nombre"><input id="pprice" type="number" placeholder="Precio"><select id="pcategoryId"></select><input id="pimage" placeholder="Imagen: /img/burger.svg"><input id="pfile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><input id="pdescription" class="span2" placeholder="Descripcion"><label><input id="pactive" type="checkbox" checked> Activo</label><button class="primary" onclick="saveProduct()">Guardar producto</button></div>
       <div id="productsList" class="admin-list"></div>
     </section>
 
@@ -25,7 +25,8 @@
 
     <section id="history" class="panel"><h2>Historial</h2><div class="form-grid"><select id="filterStatus" onchange="renderHistory()"><option value="">Todos los estados</option><option>RECEIVED</option><option>PREPARING</option><option>READY</option><option>DELIVERED</option><option>CANCELLED</option></select><input id="filterTable" oninput="renderHistory()" placeholder="Mesa"><input id="filterText" oninput="renderHistory()" placeholder="Buscar texto"></div><div id="historyList" class="admin-list"></div></section>
 
-    <section id="settings" class="panel"><h2>Configuracion y backup</h2><div class="form-grid"><input id="businessName" placeholder="Nombre negocio"><input id="apSsid" placeholder="SSID AP"><input id="apPassword" placeholder="Password AP"><label><input id="counterModeEnabled" type="checkbox"> Modo contador</label><button class="primary" onclick="saveSettings()">Guardar configuracion</button><button onclick="exportBackup()">Exportar backup</button><input id="backupFile" type="file" accept="application/json"><button onclick="importBackup()">Importar backup</button><button class="danger-btn" onclick="resetData()">Reset demo</button></div></section>
+    <section id="settings" class="panel"><h2>Configuracion del negocio</h2><div class="form-grid"><input id="businessName" placeholder="Nombre negocio"><input id="businessLogo" placeholder="Logo: /img/logo.svg"><input id="primaryColor" type="color" value="#5b4bff"><input id="address" placeholder="Direccion"><input id="phone" placeholder="Telefono"><input id="currency" placeholder="Moneda, ej: $"><label><input id="taxEnabled" type="checkbox"> Impuesto activo</label><input id="taxRate" type="number" step="0.01" placeholder="Impuesto %"><label><input id="serviceTipEnabled" type="checkbox"> Servicio activo</label><input id="serviceTipRate" type="number" step="0.01" placeholder="Servicio %"><button class="primary" onclick="saveBusiness()">Guardar negocio</button></div></section>
+    <section class="panel"><h2>WiFi, backup y exportacion</h2><div class="form-grid"><input id="apSsid" placeholder="SSID AP"><input id="apPassword" placeholder="Password AP"><label><input id="counterModeEnabled" type="checkbox"> Modo contador</label><button class="primary" onclick="saveSettings()">Guardar WiFi</button><button onclick="exportBackup()">Exportar backup</button><button onclick="exportOrders('json')">Pedidos JSON</button><button onclick="exportOrders('csv')">Pedidos CSV</button><input id="backupFile" type="file" accept="application/json"><button onclick="importBackup()">Importar backup</button><button class="danger-btn" onclick="resetData()">Reset demo</button></div></section>
   </main>
   <script src="/admin.js"></script>
 </body>

@@ -1,9 +1,10 @@
 #include "App.h"
 
-void printOrderTicket(Order& order) {
+namespace PrinterService {
+void printOrder(const Order& order) {
   Serial.println();
   Serial.println("========== ORDERBOX TICKET ==========");
-  Serial.println(settings.businessName);
+  Serial.println(business.businessName.length() ? business.businessName : settings.businessName);
   Serial.print("Pedido #");
   Serial.println(order.id);
 
@@ -19,7 +20,7 @@ void printOrderTicket(Order& order) {
 
   float total = 0;
   for (int i = 0; i < order.itemCount; i++) {
-    OrderItem& item = order.items[i];
+    const OrderItem& item = order.items[i];
     Serial.print(item.qty);
     Serial.print(" x ");
     Serial.print(item.name);
@@ -52,4 +53,9 @@ void printOrderTicket(Order& order) {
   Serial.println(total);
   Serial.println("=====================================");
   Serial.println();
+}
+}
+
+void printOrderTicket(const Order& order) {
+  PrinterService::printOrder(order);
 }

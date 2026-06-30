@@ -1,0 +1,10 @@
+let orders=[],currency='$';
+const labels={DELIVERED:'Entregado',CANCELLED:'Cancelado',READY:'Listo',PREPARING:'Preparando',RECEIVED:'Recibido'};
+const money=n=>currency+Number(n||0).toLocaleString('es-CO');
+function total(o){return o.items.reduce((a,i)=>a+(i.price+(i.extras||[]).reduce((x,e)=>x+Number(e.price||0),0))*i.qty,0);}
+function src(o){return o.sourceType==='counter'?`Mostrador #${o.counterNumber}`:`Mesa ${o.table}`;}
+async function load(){const [o,b]=await Promise.all([fetch('/api/orders').then(r=>r.json()),fetch('/api/business').then(r=>r.json()).catch(()=>({}))]);orders=o;currency=b.currency||currency;render();}
+function render(){const st=filterStatus.value,t=filterTable.value.toLowerCase(),d=filterDate.value,q=filterText.value.toLowerCase();let list=orders.filter(o=>['DELIVERED','CANCELLED'].includes(o.status));if(st)list=list.filter(o=>o.status===st);if(t)list=list.filter(o=>String(o.table).toLowerCase().includes(t));if(d)list=list.filter(o=>new Date(Number(o.createdAt||0)).toISOString().slice(0,10)===d);if(q)list=list.filter(o=>JSON.stringify(o).toLowerCase().includes(q));historyList.innerHTML=list.reverse().map(o=>`<div class="admin-row"><span class="logo">#${o.id}</span><div><b>${labels[o.status]} - ${src(o)}</b><br><small>${new Date(Number(o.createdAt||0)).toLocaleString()} - ${o.items.map(i=>i.qty+'x '+i.name).join(', ')} - ${money(total(o))}${o.cancelReason?' - '+o.cancelReason:''}</small></div><button onclick="repeatOrder(${o.id})">Repetir</button></div>`).join('')||'<p class="muted">Sin resultados.</p>';}
+async function repeatOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;const body={sourceType:o.sourceType,table:o.table,items:o.items.map(i=>({productId:i.productId,qty:i.qty,extras:(i.extras||[]).map(e=>e.id),notes:i.notes||''})),notes:o.notes||''};await fetch('/api/order/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});load();}
+async function download(url,name){const data=await fetch(url).then(r=>r.text());const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data]));a.download=name;a.click();}
+load();

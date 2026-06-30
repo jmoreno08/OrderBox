@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dashboard - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="admin-page">
+  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Dashboard</small></div></div><a href="/admin">Admin</a><a href="/kitchen">Cocina</a><a href="/waiter">Meseros</a><a href="/history">Historial</a></aside>
+  <main class="admin-main">
+    <section class="section-title"><h1>Dashboard en tiempo real</h1><button id="soundBtn" onclick="enableSound()">Activar sonido</button></section>
+    <div id="stats" class="stats-grid"></div>
+    <section class="panel"><h2>Pedidos por estado</h2><div id="stateStats" class="state-grid"></div></section>
+    <section class="panel"><h2>Pedidos activos</h2><div id="activeOrders" class="ops-grid"></div></section>
+  </main>
+  <script src="/dashboard.js"></script>
+</body>
+</html>

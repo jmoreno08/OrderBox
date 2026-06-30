@@ -24,3 +24,4 @@ int nextOrderId = 1;
 int nextCounterNumber = 1;
 
 AppSettings settings;
+BusinessConfig business;

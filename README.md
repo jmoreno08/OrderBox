@@ -1,20 +1,21 @@
-# OrderBox Sprint 3 - PlatformIO
+# OrderBox Sprint 4 - PlatformIO
 
-OrderBox es un sistema local de pedidos para restaurantes en ESP32-S3. Funciona offline como Access Point, sirve la UI desde LittleFS y mantiene los datos en JSON.
+OrderBox es un sistema local de pedidos para restaurantes sobre ESP32-S3. El modulo crea un WiFi AP offline, sirve la interfaz desde LittleFS y persiste datos operativos en JSON.
 
-## Funciones principales
+## Funcionalidades Sprint 4
 
-- Cliente por QR de mesa: `http://192.168.4.1/?table=1`.
-- Cliente por contador: `http://192.168.4.1/?mode=counter`.
-- Admin protegido con HTTP Basic.
-- Cocina protegida con HTTP Basic y tablero Kanban.
-- CRUD de productos, categorias, extras y mesas.
-- Extras y observaciones por item y por pedido.
-- Pedidos persistidos con estados `RECEIVED`, `PREPARING`, `READY`, `DELIVERED`, `CANCELLED`.
-- WebSocket para actualizacion en tiempo real.
-- Sonido opcional en cocina para nuevos pedidos.
-- Dashboard, historial con filtros, backup export/import y helper de URLs.
-- Base preparada para impresion ESC/POS mediante `printOrderTicket(Order& order)`.
+- Cliente QR por mesa: `http://192.168.4.1/?table=1`.
+- Cliente mostrador: `http://192.168.4.1/?mode=counter`.
+- Admin protegido con HTTP Basic para productos, categorias, extras, mesas, negocio, backup e historial.
+- Dashboard en tiempo real en `/dashboard` con pedidos activos, ventas del dia, promedio de preparacion y estados.
+- Kitchen Display en `/kitchen` con pedidos `RECEIVED` y `PREPARING`, tarjetas grandes, sonido y avance a `READY`.
+- Panel de meseros en `/waiter` para entregar pedidos `READY`.
+- Panel de caja en `/cashier` con ventas del dia y exportacion CSV.
+- Historial en `/history` con filtros, repeticion de pedidos y exportacion JSON/CSV.
+- Productos agrupados por categoria, fotos desde LittleFS y busqueda instantanea.
+- Configuracion persistente del negocio en `/business.json`.
+- Cancelacion con motivo, permitida solo cuando el pedido esta `RECEIVED`.
+- Servicio de impresion preparado: `PrinterService::printOrder(const Order& order)`.
 
 ## Comandos PlatformIO
 
@@ -25,24 +26,28 @@ pio run -t uploadfs
 pio device monitor -b 115200
 ```
 
-Ejecuta `uploadfs` cada vez que cambies archivos en `data/`.
+Ejecuta `pio run -t uploadfs` cada vez que cambies archivos en `data/`.
 
 ## Acceso inicial
 
-- WiFi: `OrderBox-XXXXXX`, donde `XXXXXX` es el ID unico del modulo ESP32-S3.
-- Password: `12345678`
+- WiFi: `OrderBox-XXXXXX`, donde `XXXXXX` es el ID unico del ESP32-S3.
+- Password WiFi: `12345678`
 - Cliente: `http://192.168.4.1/`
-- Cocina: `http://192.168.4.1/kitchen.html`
-- Admin: `http://192.168.4.1/admin.html`
+- Admin: `http://192.168.4.1/admin`
+- Dashboard: `http://192.168.4.1/dashboard`
+- Cocina: `http://192.168.4.1/kitchen`
+- Meseros: `http://192.168.4.1/waiter`
+- Caja: `http://192.168.4.1/cashier`
+- Historial: `http://192.168.4.1/history`
 
-Credenciales Admin/Cocina:
+Credenciales operativas:
 
 ```text
 Usuario: admin
 Password: 12345678
 ```
 
-## Endpoints principales
+## Endpoints
 
 Publicos:
 
@@ -54,22 +59,23 @@ Publicos:
 
 Protegidos:
 
+- `GET /api/orders`, `POST /api/order/update`, `POST /api/order/delete`
 - `GET /api/products`, `POST /api/product/save`, `POST /api/product/delete`
 - `GET /api/categories`, `POST /api/category/save`, `POST /api/category/delete`
 - `GET /api/extras`, `POST /api/extra/save`, `POST /api/extra/delete`
 - `GET /api/tables`, `POST /api/table/save`, `POST /api/table/delete`
-- `GET /api/orders`, `POST /api/order/update`, `POST /api/order/delete`
 - `GET /api/settings`, `POST /api/settings/save`
+- `GET /api/business`, `POST /api/business/save`
+- `GET /api/orders/export.json`, `GET /api/orders/export.csv`
 - `GET /api/backup/export`, `POST /api/backup/import`
 - `POST /api/upload/image`, `POST /api/reset`
 
 Todas las rutas son fijas; no se usan regex.
 
-## Persistencia
-
-LittleFS guarda:
+## Persistencia LittleFS
 
 - `/settings.json`
+- `/business.json`
 - `/categories.json`
 - `/products.json`
 - `/extras.json`
@@ -81,42 +87,30 @@ Las imagenes subidas desde Admin se guardan en `/img/products/`. Formatos acepta
 ## Estructura
 
 ```text
-OrderBox/
-|-- platformio.ini
-|-- src/
-|   |-- main.cpp
-|   |-- App.h
-|   |-- Globals.cpp
-|   |-- Utils.cpp
-|   |-- Serializers.cpp
-|   |-- Storage.cpp
-|   |-- Realtime.cpp
-|   |-- WiFiManager.cpp
-|   |-- Handlers.cpp
-|   |-- Routes.cpp
-|   `-- Printer.cpp
-`-- data/
-    |-- index.html
-    |-- app.js
-    |-- kitchen.html
-    |-- kitchen.js
-    |-- admin.html
-    |-- admin.js
-    |-- style.css
-    `-- img/
+src/
+  App.h, Globals.cpp, Utils.cpp, Serializers.cpp, Storage.cpp
+  Realtime.cpp, WiFiManager.cpp, Handlers.cpp, Routes.cpp, Printer.cpp
+data/
+  index.html, app.js
+  admin.html, admin.js
+  dashboard.html, dashboard.js
+  kitchen.html, kitchen.js
+  waiter.html, waiter.js
+  cashier.html, cashier.js
+  history.html, history.js
+  style.css, img/
 ```
 
-## Como probar Sprint 3
+## Como probar Sprint 4
 
 1. Compila con `pio run`.
 2. Sube firmware con `pio run -t upload`.
-3. Sube filesystem con `pio run -t uploadfs`.
-4. Conectate a la red `OrderBox-XXXXXX` que muestra el monitor serial.
-5. Entra a Admin y crea categorias, productos y extras.
-6. Abre `/?table=1`, agrega productos con extras y observaciones, y envia un pedido.
-7. Abre Cocina, pulsa `Activar sonido` y mueve pedidos entre columnas.
-8. En Admin revisa Dashboard, Historial, URLs de mesas y Backup.
-
-## Nota tecnica
-
-Sprint 3 mantiene arreglos estaticos para limitar RAM y evitar dependencias pesadas. El ticket se imprime por `Serial` como preparacion para UART de impresora termica en Sprint 4.
+3. Sube LittleFS con `pio run -t uploadfs`.
+4. Conectate al WiFi `OrderBox-XXXXXX`.
+5. En `/admin`, configura negocio, categorias, productos, extras y mesas.
+6. Desde `/?table=1`, crea un pedido con extras, foto visible y observaciones.
+7. En `/dashboard`, confirma actualizacion en tiempo real sin recargar.
+8. En `/kitchen`, activa sonido y cambia `Recibido -> Preparando -> Listo`.
+9. En `/waiter`, marca el pedido como entregado.
+10. En `/cashier`, revisa ventas del dia y exporta CSV.
+11. En `/history`, filtra, repite pedidos y exporta JSON/CSV.
