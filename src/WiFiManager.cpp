@@ -2,7 +2,8 @@
 
 void setupWiFiAP() {
   WiFi.mode(WIFI_AP);
-  WiFi.softAP(settings.apSsid.c_str(), settings.apPassword.c_str());
+  String effectiveSsid = buildEffectiveApSsid();
+  WiFi.softAP(effectiveSsid.c_str(), settings.apPassword.c_str());
 
   IPAddress ip = WiFi.softAPIP();
 
@@ -12,7 +13,11 @@ void setupWiFiAP() {
   Serial.print("Negocio: ");
   Serial.println(settings.businessName);
   Serial.print("SSID: ");
+  Serial.println(effectiveSsid);
+  Serial.print("SSID base: ");
   Serial.println(settings.apSsid);
+  Serial.print("Modulo ID: ");
+  Serial.println(getModuleId());
   Serial.print("Password: ");
   Serial.println(settings.apPassword);
   Serial.print("IP: ");

@@ -1,74 +1,82 @@
-# OrderBox Sprint 2 - PlatformIO
+# OrderBox Sprint 3 - PlatformIO
 
-Version refactorizada del Sprint 2 para ESP32/ESP32-S3 usando PlatformIO con Arduino Framework.
+OrderBox es un sistema local de pedidos para restaurantes en ESP32-S3. Funciona offline como Access Point, sirve la UI desde LittleFS y mantiene los datos en JSON.
 
-## Funciones incluidas
+## Funciones principales
 
-- Servidor web local en ESP32.
-- Modo Access Point offline.
-- LittleFS para archivos web y persistencia JSON.
-- CRUD de productos y mesas.
-- Bloqueo de mesas.
-- Pedidos por mesa o contador.
-- Panel cliente, cocina y administracion.
+- Cliente por QR de mesa: `http://192.168.4.1/?table=1`.
+- Cliente por contador: `http://192.168.4.1/?mode=counter`.
+- Admin protegido con HTTP Basic.
+- Cocina protegida con HTTP Basic y tablero Kanban.
+- CRUD de productos, categorias, extras y mesas.
+- Extras y observaciones por item y por pedido.
+- Pedidos persistidos con estados `RECEIVED`, `PREPARING`, `READY`, `DELIVERED`, `CANCELLED`.
 - WebSocket para actualizacion en tiempo real.
-- Rutas sin regex para evitar el error `AsyncURIMatcher`.
+- Sonido opcional en cocina para nuevos pedidos.
+- Dashboard, historial con filtros, backup export/import y helper de URLs.
+- Base preparada para impresion ESC/POS mediante `printOrderTicket(Order& order)`.
 
-## Requisitos
-
-- PlatformIO IDE para VS Code o PlatformIO CLI.
-- Cable USB de datos para flashear el ESP32-S3.
-- Placa ESP32-S3 compatible, por ejemplo `ESP32S3 Dev Module`.
-
-Las librerias se instalan desde `platformio.ini`:
-
-- `ArduinoJson`
-- `ESP32Async/AsyncTCP`
-- `ESP32Async/ESPAsyncWebServer`
-
-## Ejecutar con PlatformIO
-
-Desde la raiz del proyecto, primero verifica que PlatformIO este disponible:
-
-```bash
-pio --version
-```
-
-Compila el firmware:
+## Comandos PlatformIO
 
 ```bash
 pio run
-```
-
-Conecta la placa ESP32-S3 por USB y sube el firmware:
-
-```bash
 pio run -t upload
-```
-
-Despues sube los archivos web de `data/` al filesystem LittleFS:
-
-```bash
 pio run -t uploadfs
-```
-
-Abre el monitor serial para ver la IP, mensajes de arranque y errores:
-
-```bash
 pio device monitor -b 115200
 ```
 
-Si cambias solo HTML, CSS, JavaScript o imagenes, normalmente basta con ejecutar de nuevo:
+Ejecuta `uploadfs` cada vez que cambies archivos en `data/`.
 
-```bash
-pio run -t uploadfs
+## Acceso inicial
+
+- WiFi: `OrderBox-XXXXXX`, donde `XXXXXX` es el ID unico del modulo ESP32-S3.
+- Password: `12345678`
+- Cliente: `http://192.168.4.1/`
+- Cocina: `http://192.168.4.1/kitchen.html`
+- Admin: `http://192.168.4.1/admin.html`
+
+Credenciales Admin/Cocina:
+
+```text
+Usuario: admin
+Password: 12345678
 ```
 
-Si cambias codigo C++ en `src/`, ejecuta de nuevo:
+## Endpoints principales
 
-```bash
-pio run -t upload
-```
+Publicos:
+
+- `GET /api/public-settings`
+- `GET /api/menu`
+- `GET /api/public/categories`
+- `GET /api/public/extras`
+- `POST /api/order/create`
+
+Protegidos:
+
+- `GET /api/products`, `POST /api/product/save`, `POST /api/product/delete`
+- `GET /api/categories`, `POST /api/category/save`, `POST /api/category/delete`
+- `GET /api/extras`, `POST /api/extra/save`, `POST /api/extra/delete`
+- `GET /api/tables`, `POST /api/table/save`, `POST /api/table/delete`
+- `GET /api/orders`, `POST /api/order/update`, `POST /api/order/delete`
+- `GET /api/settings`, `POST /api/settings/save`
+- `GET /api/backup/export`, `POST /api/backup/import`
+- `POST /api/upload/image`, `POST /api/reset`
+
+Todas las rutas son fijas; no se usan regex.
+
+## Persistencia
+
+LittleFS guarda:
+
+- `/settings.json`
+- `/categories.json`
+- `/products.json`
+- `/extras.json`
+- `/tables.json`
+- `/orders.json`
+
+Las imagenes subidas desde Admin se guardan en `/img/products/`. Formatos aceptados: JPG, PNG, WebP y SVG. Limite actual: 120 KB por imagen.
 
 ## Estructura
 
@@ -85,87 +93,30 @@ OrderBox/
 |   |-- Realtime.cpp
 |   |-- WiFiManager.cpp
 |   |-- Handlers.cpp
-|   `-- Routes.cpp
-|-- data/
-|   |-- index.html
-|   |-- kitchen.html
-|   |-- admin.html
-|   |-- style.css
-|   |-- app.js
-|   |-- kitchen.js
-|   |-- admin.js
-|   `-- img/
-`-- OrderBox.ino
+|   |-- Routes.cpp
+|   `-- Printer.cpp
+`-- data/
+    |-- index.html
+    |-- app.js
+    |-- kitchen.html
+    |-- kitchen.js
+    |-- admin.html
+    |-- admin.js
+    |-- style.css
+    `-- img/
 ```
 
-`OrderBox.ino` queda como variante para Arduino IDE. El build de PlatformIO usa `src/main.cpp` y los modulos en `src/`.
+## Como probar Sprint 3
 
-## Acceso inicial
+1. Compila con `pio run`.
+2. Sube firmware con `pio run -t upload`.
+3. Sube filesystem con `pio run -t uploadfs`.
+4. Conectate a la red `OrderBox-XXXXXX` que muestra el monitor serial.
+5. Entra a Admin y crea categorias, productos y extras.
+6. Abre `/?table=1`, agrega productos con extras y observaciones, y envia un pedido.
+7. Abre Cocina, pulsa `Activar sonido` y mueve pedidos entre columnas.
+8. En Admin revisa Dashboard, Historial, URLs de mesas y Backup.
 
-Despues de cargar el firmware y `data/`:
+## Nota tecnica
 
-- Red WiFi: `OrderBox`
-- Password: `12345678`
-- Menu: `http://192.168.4.1/`
-- Cocina: `http://192.168.4.1/kitchen.html`
-- Admin: `http://192.168.4.1/admin.html`
-
-## Seguridad de Admin y Cocina
-
-Las vistas de cocina y administracion usan autenticacion HTTP Basic.
-
-Credenciales por defecto:
-
-```text
-Usuario: admin
-Password: 12345678
-```
-
-Rutas protegidas:
-
-- `http://192.168.4.1/admin.html`
-- `http://192.168.4.1/kitchen.html`
-- APIs de productos, mesas, pedidos, configuracion, reset y carga de imagenes.
-
-La vista cliente (`/?table=1` o `/?mode=counter`) no muestra accesos a Admin ni Cocina. Solo conserva las rutas publicas necesarias para leer el menu, leer configuracion publica y crear pedidos.
-
-## QR por mesa
-
-Cada QR puede apuntar a:
-
-```text
-http://192.168.4.1/?table=1
-```
-
-Tambien funciona con mDNS si luego se agrega:
-
-```text
-http://orderbox.local/?table=1
-```
-
-## Imagenes de productos
-
-Para operacion offline, guarda las imagenes en LittleFS dentro de:
-
-```text
-data/img/
-```
-
-Luego en el producto usa una ruta como:
-
-```text
-/img/burger.svg
-/img/pizza.svg
-/img/producto.jpg
-```
-
-Recomendacion para ESP32: usar imagenes pequenas, idealmente WebP/JPG optimizadas de 30 KB a 80 KB por producto.
-
-Tambien puedes cargarlas desde el navegador en el panel Admin:
-
-1. Entra a `http://192.168.4.1/admin.html`.
-2. En Productos, selecciona una imagen en el campo de archivo.
-3. Completa nombre, precio, categoria y descripcion.
-4. Pulsa `Guardar producto`.
-
-El ESP32 guarda la imagen en LittleFS bajo `/img/products/` y asigna esa ruta al producto. Se aceptan archivos `.jpg`, `.jpeg`, `.png`, `.webp` y `.svg`, con limite de 120 KB por imagen.
+Sprint 3 mantiene arreglos estaticos para limitar RAM y evitar dependencias pesadas. El ticket se imprime por `Serial` como preparacion para UART de impresora termica en Sprint 4.

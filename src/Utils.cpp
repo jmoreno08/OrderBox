@@ -26,9 +26,43 @@ String readBody(AsyncWebServerRequest *request) {
   return "";
 }
 
+String getModuleId() {
+  uint64_t mac = ESP.getEfuseMac();
+  char id[7];
+  snprintf(id, sizeof(id), "%06X", (uint32_t)(mac & 0xFFFFFF));
+  return String(id);
+}
+
+String buildEffectiveApSsid() {
+  String base = settings.apSsid.length() ? settings.apSsid : WIFI_AP_SSID_DEFAULT;
+  String suffix = "-" + getModuleId();
+  int maxBaseLength = 32 - suffix.length();
+
+  if (maxBaseLength < 1) maxBaseLength = 1;
+  if (base.length() > (size_t)maxBaseLength) {
+    base = base.substring(0, maxBaseLength);
+  }
+
+  return base + suffix;
+}
+
 Product* findProductById(int id) {
   for (int i = 0; i < productCount; i++) {
     if (products[i].id == id) return &products[i];
+  }
+  return nullptr;
+}
+
+Category* findCategoryById(int id) {
+  for (int i = 0; i < categoryCount; i++) {
+    if (categories[i].id == id) return &categories[i];
+  }
+  return nullptr;
+}
+
+Extra* findExtraById(int id) {
+  for (int i = 0; i < extraCount; i++) {
+    if (extras[i].id == id) return &extras[i];
   }
   return nullptr;
 }

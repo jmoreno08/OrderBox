@@ -3,9 +3,17 @@
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
+Category categories[MAX_CATEGORIES];
+int categoryCount = 0;
+int nextCategoryId = 1;
+
 Product products[MAX_PRODUCTS];
 int productCount = 0;
 int nextProductId = 1;
+
+Extra extras[MAX_EXTRAS];
+int extraCount = 0;
+int nextExtraId = 1;
 
 TableInfo tables[MAX_TABLES];
 int tableCount = 0;
