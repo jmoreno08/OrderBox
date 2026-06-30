@@ -1,34 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OrderBox - Cliente</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OrderBox - Menu Digital</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <main class="container">
-    <section class="card header">
-      <h1>OrderBox</h1>
-      <p id="sourceLabel">Cargando...</p>
-    </section>
+<body class="customer-page">
+  <header class="topbar glass">
+    <div class="brand"><span class="logo">OB</span><div><b id="title">OrderBox</b><small>Menu digital local</small></div></div>
+    <div class="top-actions"><span id="tableBadge" class="pill">Pedido mostrador</span></div>
+  </header>
 
-    <section class="card">
-      <h2>Menú</h2>
-      <div id="menu" class="menu"></div>
-    </section>
-
-    <section class="card">
-      <h2>Carrito</h2>
-      <div id="cart"></div>
-      <div class="total">
-        Total: <strong id="total">$0</strong>
+  <main class="shop-layout">
+    <section>
+      <div class="hero gradient-card">
+        <div><p class="eyebrow">Ordena facil y rapido</p><h1>Selecciona tus productos</h1><p>Envia tu pedido directamente al restaurante.</p></div>
+        <div class="hero-icon">+</div>
       </div>
-      <button id="sendOrderBtn">Enviar pedido</button>
-      <p id="message"></p>
+      <nav id="categories" class="category-bar"></nav>
+      <div id="menu" class="product-grid"></div>
     </section>
-  </main>
 
-  <script src="/customer.js"></script>
+    <aside class="cart-panel glass">
+      <div class="section-title"><h2>Tu pedido</h2><button class="link-btn danger" onclick="clearCart()">Limpiar</button></div>
+      <div id="cart"></div>
+      <label class="field-label">Observaciones</label>
+      <textarea id="notes" placeholder="Ej: sin cebolla, poco hielo..."></textarea>
+      <div class="total-line"><span>Total</span><strong id="total">$0</strong></div>
+      <button class="primary wide" onclick="sendOrder()">Enviar pedido</button>
+      <p id="msg" class="msg"></p>
+    </aside>
+  </main>
+  <script src="/app.js"></script>
 </body>
 </html>

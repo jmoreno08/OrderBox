@@ -1,145 +1,16 @@
-const ordersContainer = document.getElementById("orders");
-const wsStatus = document.getElementById("wsStatus");
-
-let orders = [];
-
-function formatCurrency(value) {
-  return "$" + Number(value).toLocaleString("es-CO");
+let allOrders = [];
+let filter = 'ALL';
+const money = n => '$' + Number(n || 0).toLocaleString('es-CO');
+const img = i => i.image || '/img/placeholder.svg';
+function statusLabel(s){return {RECEIVED:'Recibido',PREPARING:'Preparando',READY:'Listo',DELIVERED:'Entregado',CANCELLED:'Cancelado'}[s]||s;}
+async function load(){allOrders = await fetch('/api/orders').then(r=>r.json()); render();}
+function setFilter(s){filter=s; render();}
+function render(){
+  ['ALL','RECEIVED','PREPARING','READY'].forEach(s=>{const el=document.getElementById('tab'+s); if(el) el.classList.toggle('active',s===filter)});
+  let list = allOrders.slice().reverse();
+  if(filter !== 'ALL') list = list.filter(o=>o.status===filter);
+  if(!list.length){orders.innerHTML='<p class="muted">No hay pedidos para mostrar.</p>';return;}
+  orders.innerHTML = list.map(o=>`<article class="order-card ${o.status}"><div class="order-head"><div><h3>#${o.id} ${o.table?'· Mesa '+o.table:'· Mostrador '+(o.counterNumber||'')}</h3><small>${statusLabel(o.status)}</small></div><span class="pill">${o.items.length} items</span></div><div class="order-items">${o.items.map(i=>`<div class="order-item"><img class="mini-img" src="${img(i)}" onerror="this.src='/img/placeholder.svg'"><span><b>${i.qty} x ${i.name}</b><br><small>${money(i.price)}</small></span></div>`).join('')}</div><div class="order-actions"><button class="btn-state" onclick="upd(${o.id},'RECEIVED')">Recibido</button><button class="btn-state btn-orange" onclick="upd(${o.id},'PREPARING')">Preparando</button><button class="btn-state btn-green" onclick="upd(${o.id},'READY')">Listo</button><button class="btn-state" onclick="upd(${o.id},'DELIVERED')">Entregado</button></div></article>`).join('');
 }
-
-function statusLabel(status) {
-  const map = {
-    RECEIVED: "Recibido",
-    PREPARING: "Preparando",
-    READY: "Listo",
-    DELIVERED: "Entregado"
-  };
-
-  return map[status] || status;
-}
-
-function sourceText(order) {
-  if (order.sourceType === "counter") {
-    return `Contador #${order.counterNumber}`;
-  }
-
-  return `Mesa ${order.table}`;
-}
-
-async function loadOrders() {
-  const response = await fetch("/api/orders");
-  orders = await response.json();
-  renderOrders();
-}
-
-function renderOrders() {
-  ordersContainer.innerHTML = "";
-
-  if (orders.length === 0) {
-    ordersContainer.innerHTML = `<section class="card"><p>No hay pedidos todavía.</p></section>`;
-    return;
-  }
-
-  orders
-    .slice()
-    .reverse()
-    .forEach(order => {
-      const total = order.items.reduce((sum, item) => sum + item.price * item.qty, 0);
-
-      const div = document.createElement("section");
-      div.className = "card order-card";
-
-      div.innerHTML = `
-        <div class="order-header">
-          <h2>Pedido #${order.id}</h2>
-          <span class="badge">${statusLabel(order.status)}</span>
-        </div>
-
-        <p><strong>Origen:</strong> ${sourceText(order)}</p>
-
-        <ul>
-          ${order.items.map(item => `
-            <li>${item.qty} x ${item.name} - ${formatCurrency(item.price * item.qty)}</li>
-          `).join("")}
-        </ul>
-
-        <p class="total">Total: <strong>${formatCurrency(total)}</strong></p>
-
-        <div class="actions">
-          <button onclick="updateOrder(${order.id}, 'PREPARING')">Preparando</button>
-          <button onclick="updateOrder(${order.id}, 'READY')">Listo</button>
-          <button onclick="updateOrder(${order.id}, 'DELIVERED')">Entregado</button>
-          <button class="danger" onclick="deleteOrder(${order.id})">Eliminar</button>
-        </div>
-      `;
-
-      ordersContainer.appendChild(div);
-    });
-}
-
-async function updateOrder(orderId, status) {
-  const response = await fetch(`/api/order/${orderId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ status })
-  });
-
-  if (response.ok) {
-    const updated = await response.json();
-    orders = orders.map(order => order.id === updated.id ? updated : order);
-    renderOrders();
-  }
-}
-
-async function deleteOrder(orderId) {
-  const response = await fetch(`/api/order/${orderId}`, {
-    method: "DELETE"
-  });
-
-  if (response.ok) {
-    orders = orders.filter(order => order.id !== orderId);
-    renderOrders();
-  }
-}
-
-function connectWebSocket() {
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
-
-  ws.onopen = () => {
-    wsStatus.textContent = "Conectado";
-  };
-
-  ws.onclose = () => {
-    wsStatus.textContent = "Desconectado";
-    setTimeout(connectWebSocket, 2000);
-  };
-
-  ws.onerror = () => {
-    wsStatus.textContent = "Error WS";
-  };
-
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-
-    if (message.event === "newOrder") {
-      orders.push(message.data);
-      renderOrders();
-    }
-
-    if (message.event === "orderUpdated") {
-      orders = orders.map(order => order.id === message.data.id ? message.data : order);
-      renderOrders();
-    }
-
-    if (message.event === "orderDeleted") {
-      orders = orders.filter(order => order.id !== message.data.id);
-      renderOrders();
-    }
-  };
-}
-
-loadOrders();
-connectWebSocket();
+async function upd(id,status){await fetch('/api/order/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});load();}
+let ws = new WebSocket(`ws://${location.host}/ws`); ws.onmessage = load; load();

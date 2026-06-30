@@ -1,37 +1,18 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OrderBox - Admin</title>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <main class="container">
-    <section class="card header">
-      <h1>Panel de administración</h1>
-      <p>Control de productos y mesas</p>
-      <span id="wsStatus" class="badge">Conectando...</span>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admin - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="admin-page">
+  <aside class="sidebar"><div class="brand big"><span class="logo">OB</span><div><b>OrderBox</b><small>Panel administrador</small></div></div><a href="#dashboard">Dashboard</a><a href="#products">Productos</a><a href="#tables">Mesas</a><a href="#settings">Configuracion</a></aside>
+  <main class="admin-main">
+    <section id="dashboard"><h1>Dashboard</h1><div id="stats" class="stats-grid"></div></section>
+    <section id="products" class="panel"><div class="section-title"><h2>Productos</h2><span class="pill">Imagen por producto</span></div>
+      <div class="form-grid"><input id="pname" placeholder="Nombre"><input id="pprice" type="number" placeholder="Precio"><input id="pcategory" placeholder="Categoria"><input id="pimage" placeholder="Imagen: /img/burger.svg"><input id="pfile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"><input id="pdescription" class="span2" placeholder="Descripcion"><label><input id="pactive" type="checkbox" checked> Activo</label><button class="primary" onclick="saveProduct()">Guardar producto</button></div>
+      <p id="uploadMsg" class="muted"></p>
+      <div id="productsList" class="admin-list"></div>
     </section>
-
-    <section class="card">
-      <h2>Productos</h2>
-      <div id="products"></div>
-    </section>
-
-    <section class="card">
-      <h2>Mesas</h2>
-      <p class="muted">Una mesa bloqueada no permite crear nuevos pedidos desde su QR.</p>
-      <div id="tables"></div>
-    </section>
-
-    <section class="card">
-      <h2>QR sugeridos</h2>
-      <p><strong>Mesa 1:</strong> http://192.168.4.1/?table=1</p>
-      <p><strong>Contador:</strong> http://192.168.4.1/?mode=counter</p>
-    </section>
+    <section id="tables" class="panel"><h2>Mesas</h2><div class="form-grid"><input id="tid" placeholder="ID mesa"><input id="tname" placeholder="Nombre"><label><input id="tlocked" type="checkbox"> Bloqueada</label><button class="primary" onclick="saveTable()">Guardar mesa</button></div><div id="tablesList" class="admin-list"></div></section>
+    <section id="settings" class="panel"><h2>Configuracion</h2><div class="form-grid"><input id="businessName" placeholder="Nombre negocio"><input id="apSsid" placeholder="SSID AP"><input id="apPassword" placeholder="Password AP"><label><input id="counterModeEnabled" type="checkbox"> Modo contador</label><button class="primary" onclick="saveSettings()">Guardar configuracion</button><button class="danger-btn" onclick="resetData()">Reset demo</button></div></section>
   </main>
-
   <script src="/admin.js"></script>
 </body>
 </html>

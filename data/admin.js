@@ -1,134 +1,80 @@
-const productsContainer = document.getElementById("products");
-const tablesContainer = document.getElementById("tables");
-const wsStatus = document.getElementById("wsStatus");
+const money = n => '$' + Number(n || 0).toLocaleString('es-CO');
 
-let products = [];
-let tables = [];
-
-function formatCurrency(value) {
-  return "$" + Number(value).toLocaleString("es-CO");
+async function load(){
+  const p = await fetch('/api/products').then(r=>r.json());
+  const t = await fetch('/api/tables').then(r=>r.json());
+  const o = await fetch('/api/orders').then(r=>r.json());
+  stats.innerHTML = `<div class="stat">Productos<b>${p.length}</b></div><div class="stat">Mesas<b>${t.length}</b></div><div class="stat">Pedidos<b>${o.length}</b></div><div class="stat">Ventas demo<b>${money(o.reduce((a,x)=>a+x.items.reduce((s,i)=>s+i.qty*i.price,0),0))}</b></div>`;
+  productsList.innerHTML = p.map(x=>`<div class="admin-row"><img class="mini-img" src="${x.image||'/img/placeholder.svg'}" onerror="this.src='/img/placeholder.svg'"><div><b>${x.name}</b><br><small>${x.category||'General'} - ${money(x.price)} - ${x.active?'Activo':'Inactivo'}</small></div><button onclick="editProduct(${x.id})">Editar</button><button class="danger-btn" onclick="removeProduct(${x.id})">Eliminar</button></div>`).join('');
+  window._products = p;
+  tablesList.innerHTML = t.map(x=>`<div class="admin-row"><span class="logo">M</span><div><b>${x.name}</b><br><small>${x.locked?'Bloqueada':'Disponible'} - QR: /?table=${x.id}</small></div><button onclick="editTable('${x.id}')">Editar</button><button class="danger-btn" onclick="removeTable('${x.id}')">Eliminar</button></div>`).join('');
+  window._tables = t;
+  const s = await fetch('/api/settings').then(r=>r.json());
+  businessName.value=s.businessName||'';
+  apSsid.value=s.apSsid||'';
+  apPassword.value=s.apPassword||'';
+  counterModeEnabled.checked=!!s.counterModeEnabled;
 }
 
-async function loadProducts() {
-  const response = await fetch("/api/admin/menu");
-  products = await response.json();
-  renderProducts();
+function editProduct(id){
+  const p=window._products.find(x=>x.id===id);
+  if(!p)return;
+  pname.dataset.id=p.id;
+  pname.value=p.name;
+  pprice.value=p.price;
+  pcategory.value=p.category||'';
+  pdescription.value=p.description||'';
+  pimage.value=p.image||'';
+  pfile.value='';
+  uploadMsg.textContent='';
+  pactive.checked=!!p.active;
+  scrollTo({top:products.offsetTop,behavior:'smooth'});
 }
 
-async function loadTables() {
-  const response = await fetch("/api/tables");
-  tables = await response.json();
-  renderTables();
-}
+async function uploadProductImage(){
+  const file = pfile.files[0];
+  if(!file) return pimage.value || '/img/placeholder.svg';
 
-function renderProducts() {
-  productsContainer.innerHTML = "";
-
-  products.forEach(product => {
-    const div = document.createElement("div");
-    div.className = "admin-row";
-
-    div.innerHTML = `
-      <div>
-        <strong>${product.name}</strong>
-        <span>${formatCurrency(product.price)}</span>
-        <small>${product.active ? "Activo" : "Inactivo"}</small>
-      </div>
-      <button class="${product.active ? "danger" : "success"}" onclick="toggleProduct(${product.id}, ${!product.active})">
-        ${product.active ? "Desactivar" : "Activar"}
-      </button>
-    `;
-
-    productsContainer.appendChild(div);
-  });
-}
-
-function renderTables() {
-  tablesContainer.innerHTML = "";
-
-  tables.forEach(table => {
-    const div = document.createElement("div");
-    div.className = "admin-row";
-
-    div.innerHTML = `
-      <div>
-        <strong>Mesa ${table.id}</strong>
-        <span>QR: http://192.168.4.1/?table=${table.id}</span>
-        <small>${table.locked ? "Bloqueada" : "Disponible"}</small>
-      </div>
-      <button class="${table.locked ? "success" : "danger"}" onclick="toggleTable('${table.id}', ${!table.locked})">
-        ${table.locked ? "Desbloquear" : "Bloquear"}
-      </button>
-    `;
-
-    tablesContainer.appendChild(div);
-  });
-}
-
-async function toggleProduct(productId, active) {
-  const response = await fetch(`/api/product/${productId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ active })
-  });
-
-  if (response.ok) {
-    const updated = await response.json();
-    products = products.map(product => product.id === updated.id ? updated : product);
-    renderProducts();
+  if(file.size > 120000){
+    uploadMsg.textContent='La imagen debe pesar maximo 120 KB.';
+    throw new Error('Image too large');
   }
-}
 
-async function toggleTable(tableId, locked) {
-  const response = await fetch(`/api/table/${tableId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ locked })
-  });
+  uploadMsg.textContent='Subiendo imagen...';
 
-  if (response.ok) {
-    const updated = await response.json();
-    tables = tables.map(table => table.id === updated.id ? updated : table);
-    renderTables();
+  const body = new FormData();
+  body.append('image', file);
+
+  const response = await fetch('/api/upload/image',{method:'POST',body});
+  const result = await response.json();
+
+  if(!response.ok){
+    uploadMsg.textContent=result.error || 'No se pudo subir la imagen.';
+    throw new Error(uploadMsg.textContent);
   }
+
+  uploadMsg.textContent='Imagen cargada.';
+  pimage.value = result.path;
+  return result.path;
 }
 
-function connectWebSocket() {
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
-
-  ws.onopen = () => {
-    wsStatus.textContent = "Conectado";
-  };
-
-  ws.onclose = () => {
-    wsStatus.textContent = "Desconectado";
-    setTimeout(connectWebSocket, 2000);
-  };
-
-  ws.onerror = () => {
-    wsStatus.textContent = "Error WS";
-  };
-
-  ws.onmessage = (event) => {
-    const message = JSON.parse(event.data);
-
-    if (message.event === "productUpdated") {
-      products = products.map(product => product.id === message.data.id ? message.data : product);
-      renderProducts();
-    }
-
-    if (message.event === "tableUpdated") {
-      tables = tables.map(table => table.id === message.data.id ? message.data : table);
-      renderTables();
-    }
-  };
+async function saveProduct(){
+  const id=Number(pname.dataset.id||0);
+  const image=await uploadProductImage();
+  await fetch('/api/product/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,name:pname.value,price:Number(pprice.value),category:pcategory.value||'General',description:pdescription.value,image,active:pactive.checked})});
+  ['pname','pprice','pcategory','pdescription','pimage'].forEach(id=>document.getElementById(id).value='');
+  pfile.value='';
+  uploadMsg.textContent='';
+  pname.dataset.id='';
+  pactive.checked=true;
+  load();
 }
 
-loadProducts();
-loadTables();
-connectWebSocket();
+async function removeProduct(id){await fetch('/api/product/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});load();}
+function editTable(id){const t=window._tables.find(x=>x.id===id); if(!t)return; tid.value=t.id;tname.value=t.name;tlocked.checked=!!t.locked;}
+async function saveTable(){await fetch('/api/table/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:tid.value,name:tname.value,locked:tlocked.checked})});tid.value='';tname.value='';tlocked.checked=false;load();}
+async function removeTable(id){await fetch('/api/table/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});load();}
+async function saveSettings(){await fetch('/api/settings/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({businessName:businessName.value,apSsid:apSsid.value,apPassword:apPassword.value,counterModeEnabled:counterModeEnabled.checked})});load();}
+async function resetData(){await fetch('/api/reset',{method:'POST'});load();}
+
+load();

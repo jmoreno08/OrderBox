@@ -1,11 +1,12 @@
-#include "App.h"
+#include <Arduino.h>
+#include "src/App.h"
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
   if (!LittleFS.begin(true)) {
-    Serial.println("Error montando LittleFS");
+    Serial.println("LittleFS error");
     return;
   }
 
@@ -16,9 +17,9 @@ void setup() {
   server.addHandler(&ws);
 
   setupRoutes();
-
   server.begin();
-  Serial.println("Servidor HTTP iniciado");
+
+  Serial.println("Servidor iniciado");
 }
 
 void loop() {

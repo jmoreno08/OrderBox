@@ -1,22 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OrderBox - Cocina</title>
-  <link rel="stylesheet" href="/style.css" />
-</head>
-<body>
-  <main class="container">
-    <section class="card header">
-      <h1>Panel de cocina</h1>
-      <p>Pedidos en tiempo real</p>
-      <span id="wsStatus" class="badge">Conectando...</span>
-    </section>
-
-    <section id="orders" class="orders"></section>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cocina - OrderBox</title><link rel="stylesheet" href="/style.css"></head>
+<body class="dark-page">
+  <header class="topbar dark"><div class="brand"><span class="logo">CO</span><div><b>Cocina</b><small>Pedidos en tiempo real</small></div></div></header>
+  <main class="kitchen-layout">
+    <div class="status-tabs"><button onclick="setFilter('ALL')" id="tabALL">Todos</button><button onclick="setFilter('RECEIVED')" id="tabRECEIVED">Recibidos</button><button onclick="setFilter('PREPARING')" id="tabPREPARING">Preparando</button><button onclick="setFilter('READY')" id="tabREADY">Listos</button></div>
+    <div id="orders" class="orders-list"></div>
   </main>
-
   <script src="/kitchen.js"></script>
 </body>
 </html>
